@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include "textreader.h"
 
 // Changes a 16 bit integer into big or little edian
@@ -39,17 +40,19 @@ int textreader_encode_chr(textreader_encoding_t enc, int32_t chr, char *buffer)
     case TRENC_UTF16:
         {
             uint16_t *buffer16 = (uint16_t*)buffer;
+            int len;
             if (chr <= 0xffff) // Meaning it can fit in a single 16 bit integer
             {
                 // These are the prefix marker for characters that takes more than a single 16 bit integer
                 // So a single 16 bit integer has this marker, a reader might mistake it for 2 characters
                 // So it shouldn't be allowed for a single "byte" character to have these
-                if ((chr & (0b110111 << 10)) == (0b110111 << 10))
+                if ((chr & (0b111111 << 10)) == (0b110111 << 10))
                 {
                     errno = EILSEQ;
                     return -1;
                 }
                 *buffer16 = (uint16_t)chr;
+                len = 2;
             }
             else
             {
@@ -57,6 +60,7 @@ int textreader_encode_chr(textreader_encoding_t enc, int32_t chr, char *buffer)
                 chr -= 0x10000;
                 buffer16[0] = (0x36 << 10) | ((chr & (((1 << 10)-1) << 10)) >> 10);
                 buffer16[1] = (0x37 << 10) |  (chr & ((1 << 10)-1));
+                len = 4;
             }
             if (enc != TRENC_UTF16)
             {
@@ -65,8 +69,8 @@ int textreader_encode_chr(textreader_encoding_t enc, int32_t chr, char *buffer)
                 buffer16[0] = u16_endian_change(buffer16[0], is_be);
                 buffer16[1] = u16_endian_change(buffer16[1], is_be);
             }
+            return len;
         }
-        return 4;
     case TRENC_UTF8:
         if (chr <= 0x80)
         {
@@ -108,10 +112,9 @@ int textreader_encode_chr(textreader_encoding_t enc, int32_t chr, char *buffer)
             return i+1;
         }
         // break;
-    default:
-        errno = EINVAL;
-        break;
     }
+    errno = EINVAL;
+    return -1;
 }
 
 textreader_t textreader_openfileptr(FILE *file, textreader_encoding_t encoding)
@@ -554,7 +557,7 @@ int32_t textreader_getc(textreader_t *reader)
                 return EOF;
 
             int byte_count = 0;
-            for (; (c & (1 << 7-byte_count)) != 0; ++byte_count);
+            for (; (c & (1 << (7-byte_count))) != 0; ++byte_count);
             if (byte_count == 0)
             {
                 rslt = c;

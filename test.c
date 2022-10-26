@@ -7,13 +7,12 @@
 
 #include "textreader.h"
 
-typedef struct reader_tester
-{
-
-} reader_tester_t;
-
 int main()
 {
+    uint8_t buffer[4];
+    int buflen = textreader_encode_chr(TRENC_UTF8, 12525, buffer);
+    printf("%i\n", buflen);
+    printf("%x %x %x", buffer[0], buffer[1], buffer[2]);
 
     return 0;
 }

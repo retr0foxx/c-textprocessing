@@ -2,3 +2,5 @@ bin
 obj
 textprocessing.depend
 textprocessing.cbp
+*.out
+*.exe
