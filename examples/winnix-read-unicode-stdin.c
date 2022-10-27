@@ -12,11 +12,11 @@
  *   1. Set the mode of stdin to UTF-16 so that text read from stdin will be in UTF-16
  *      Note: Any other modes other than UTF-16 does not work, or at least it doesn't in my computer
  *            This also makes it so that you can only read from stdin using wide string io functions like fgetwc, fgetws, etc.
- *   
+ *
  *   2. Read from stdin by using fgetwc. And then each of those 2 bytes are a single UTF-16 byte.
  *      Note: Textreader abstracts the process of reading bytes from files/memory using a single function, textreader_get_byte
  *            And that function only returns bytes.
- *    
+ *
  *   3. Each 2 bytes received from fgetwc will be put into a temporary wchar_t buffer
  *      And then it will be returned byte-by-byte starting from the least significant byte number and decoded by the decoder
  *
@@ -25,7 +25,7 @@
  * Because of the way textreader actually reads from files before decoding it
  * I thought maybe I would be able to _setmode to utf-8 or something and read it byte by byte
  * But that doesn't work.
- * 
+ *
  * If I'm not mistaken, on linux you can setlocale to utf-8 and then normally read byte-by-byte so there's no problem there
  */
 
@@ -35,7 +35,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include "../textreader.h"
+
+#include <textprocessing/textprocessing.h>
+#include <textprocessing/textreader.h>
 
 #if defined(_WIN32)
     #define OS_WIN32
@@ -44,22 +46,22 @@
     #include <io.h>
     #include <fcntl.h>
 
-    #define READER_ENCODING TRENC_UTF16
-    #define OUTPUT_CONVERT_ENCODING TRENC_UTF16
+    #define READER_ENCODING TPENC_UTF16
+    #define OUTPUT_CONVERT_ENCODING TPENC_UTF16
 
     // Because after doing _setmode to a certain unicode encoding on windows
     // Only string functions will work on that file stream
     #define FPUTS_LITERAL(string) fputws(L##string, stdout)
 #elif defined(unix) || defined(__unix__) || defined(__unix)
-    #define OS_UNIX   
-    
+    #define OS_UNIX
+
     #include <locale.h>
 
-    #define READER_ENCODING TRENC_UTF8
-    #define OUTPUT_CONVERT_ENCODING TRENC_UTF8
+    #define READER_ENCODING TPENC_UTF8
+    #define OUTPUT_CONVERT_ENCODING TPENC_UTF8
 
     #define SET_LOCALE_TO "en_US.UTF-8"
-    
+
     #define FPUTS_LITERAL(string) fputs(string, stdout)
 #endif
 
@@ -88,8 +90,8 @@ int main()
         printf("Failed to setlocale to '%s' with error %s\n", SET_LOCALE_TO, strerror(errno));
         return 1;
     }
-    #endif    
-    
+    #endif
+
     textreader_t reader = textreader_openfileptr(stdin, READER_ENCODING);
     #ifdef OS_WIN32
     reader.flags |= TRFLG_USE_FGETWC;
@@ -102,9 +104,9 @@ int main()
     int printed_start_of_input = 0;
     int printed_start_of_output = 0;
     int32_t prev_chr = 0;
-    
+
     uint8_t echo_chr_buffer[6];
-    
+
     FPUTS_LITERAL("Enter 'exit' to exit\n\n");
     while (1)
     {
@@ -153,7 +155,7 @@ int main()
             printed_start_of_output = 1;
         }
 
-        int len = textreader_encode_chr(OUTPUT_CONVERT_ENCODING, chr, echo_chr_buffer);
+        int len = textprocessing_encode_chr(OUTPUT_CONVERT_ENCODING, chr, echo_chr_buffer);
         memset(echo_chr_buffer + len, 0, 2); // Becuase len <= 4
 
         #if defined(OS_WIN32)

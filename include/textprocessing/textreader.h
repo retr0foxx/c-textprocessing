@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
+#include <textprocessing/textprocessing.h>
 
 #ifndef TEXTREADER_PUSHBACK_BUFFER_SIZE
 #define TEXTREADER_PUSHBACK_BUFFER_SIZE 512
@@ -20,16 +21,8 @@
     and on some systems, the buffer on an actual FILE could be 4kb so I don't really wanna waste it if that was the case
     so ungetc would still accept int32_t but now it will try to use the file's ungetc if that is the type of the textreader
 */
-typedef enum textreader_encoding
-{
-    TRENC_ASCII,
-    TRENC_UTF8,
-    TRENC_UTF16 = 0b100,
-    TRENC_UTF16LE,
-    TRENC_UTF16BE,
-} textreader_encoding_t;
 
-int textreader_encode_chr(textreader_encoding_t enc, int32_t chr, char *buffer);
+int textreader_encode_chr(textprocessing_encoding_t enc, int32_t chr, char *buffer);
 
 typedef enum textreader_flags
 {
@@ -59,14 +52,14 @@ typedef struct textreader
     size_t total_ungetc_count;
     off_t text_start_offset;
     textreader_flags_t flags;
-    textreader_encoding_t encoding;
+    textprocessing_encoding_t encoding;
     int wchar_buffer_used;
     wchar_t wchar_buffer;
 } textreader_t;
 
-int textreader_initfile(textreader_t *reader, const char *filename, textreader_encoding_t encoding);
-textreader_t textreader_openfileptr(FILE *file, textreader_encoding_t encoding);
-textreader_t textreader_openmem(const void *mem, size_t size, textreader_encoding_t encoding);
+int textreader_initfile(textreader_t *reader, const char *filename, textprocessing_encoding_t encoding);
+textreader_t textreader_openfileptr(FILE *file, textprocessing_encoding_t encoding);
+textreader_t textreader_openmem(const void *mem, size_t size, textprocessing_encoding_t encoding);
 
 #define TEXTREADER_INIT_FILEPTR 0
 #define TEXTREADER_INIT_FILE    1
@@ -82,11 +75,11 @@ textreader_t textreader_openmem(const void *mem, size_t size, textreader_encodin
  *  if all of that succeded, it'll end up at the start of the text
  *  the data memlem parameter is not needed for files
  */
-int textreader_init(textreader_t *reader, void *data, size_t memlen, textreader_encoding_t encoding, int init_type);
+int textreader_init(textreader_t *reader, void *data, size_t memlen, textprocessing_encoding_t encoding, int init_type);
 
 // guesses the encoding and set the textreader's encoding to the guessed encoding
 // also sets text_start_offset if the file has a BOM
-textreader_encoding_t textreader_guess_encoding(textreader_t *reader);
+textprocessing_encoding_t textreader_guess_encoding(textreader_t *reader);
 
 // im not sure what to name this
 // but it currently just does something like setting the text start offset if there's a BOM for the specified encoding

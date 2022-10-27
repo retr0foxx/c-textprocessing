@@ -5,14 +5,32 @@
 #include <io.h>
 #include <fcntl.h>
 
-#include "textreader.h"
+#include <textprocessing/textreader.h>
 
 int main()
 {
-    uint8_t buffer[4];
-    int buflen = textreader_encode_chr(TRENC_UTF8, 12525, buffer);
-    printf("%i\n", buflen);
-    printf("%x %x %x", buffer[0], buffer[1], buffer[2]);
+    // 16384
+    /*printf("%i %i %i %i %i %i %i %i %i %i %i %i %i %i\n", STDIN_FILENO, _O_U16TEXT);
+    int32_t conv = 128169;
+    uint8_t converted[4];
+    int len = textprocessing_encode_chr(TPENC_UTF16, conv, converted);
 
+    for (int i = 0; i < len; ++i)
+        printf("%x\n", converted[i]);
+*/
+    unsigned old_mode = _setmode(STDIN_FILENO, _O_U16TEXT);
+    old_mode = _setmode(STDOUT_FILENO, _O_U16TEXT);
+    wprintf(L"%u\n", old_mode);
+  /*  putwc(*((wchar_t*)(converted)), stdout);
+    putwc(*((wchar_t*)(converted+1)), stdout);*/
+    //wprintf(L"\xd83d\xdca9 \x043a\x043e\x0448\x043a\x0430 \x65e5\x672c\x56fd\n");
+
+    while (1)
+    {
+        wchar_t c = fgetwc(stdin);
+        wprintf(L"%lc", c);
+    }
     return 0;
 }
+
+//#include "./examples/winnix-read-unicode-stdin.c"
