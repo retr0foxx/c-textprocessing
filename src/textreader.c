@@ -204,10 +204,11 @@ int textreader_get_byte(textreader_t *reader)
             // That's what wchar_buffer is for
            if (reader->wchar_buffer_used == 0)
             {
-                reader->wchar_buffer = fgetwc(stdin);
-                if (reader->wchar_buffer == WEOF)
+                wint_t chr = fgetwc(stdin);
+                if (chr == WEOF)
                     return EOF;
 
+                reader->wchar_buffer = chr;
                 reader->wchar_buffer_used = sizeof(wchar_t);
             }
             // Returns the offset-th byte
@@ -244,26 +245,25 @@ int textreader_get_byte(textreader_t *reader)
             return rv;                                               \
         }                                                            \
                                                                      \
-        size_t new_index = 0;                                        \
         switch (whence)                                              \
         {                                                            \
         case SEEK_SET:                                               \
             if (pos < 0)                                             \
                 return -1;                                           \
                                                                      \
-            new_index = pos;                                        \
+            reader->data.mem.index = pos;                            \
             break;                                                   \
         case SEEK_CUR:                                               \
             if (pos < 0 && -pos > reader->data.mem.index)            \
                 return -1;                                           \
                                                                      \
-            new_index = reader->data.mem.index + pos;                \
+            reader->data.mem.index += pos;                           \
             break;                                                   \
         case SEEK_END:                                               \
             if (pos < 0 && -pos > reader->data.mem.size)             \
                 return -1;                                           \
                                                                      \
-            new_index = reader->data.mem.size + pos;                 \
+            reader->data.mem.size += pos;                            \
             break;                                                   \
         }                                                            \
         reader->flags ^= TRFLG_EOF;                                  \
@@ -357,7 +357,7 @@ int textreader_ungetc(textreader_t *reader, int32_t chr)
     if (TEXTREADER_PUSHBACK_BUFFER_SIZE - reader->ungetc_stack.size < 4)
         return EOF;
 
-    char ungetcd[4];
+    uint8_t ungetcd[4];
     int ungetcd_len = textprocessing_encode_chr(TPENC_UTF8, chr, ungetcd);
     if (ungetcd_len < 0)
         return EOF;
@@ -505,7 +505,7 @@ void textreader_clearerr(textreader_t *reader)
 
 int textreader_close(textreader_t *reader, int close_file)
 {
-    if ((reader->flags & TRFLG_ISMEM) == 0 && (close_file || reader->flags & TRFLG_IS_INIT_FILEPTR))
+    if ((reader->flags & TRFLG_ISMEM) == 0 && (close_file || !(reader->flags & TRFLG_IS_INIT_FILEPTR)))
         return fclose(reader->data.file);
 
     return 0;

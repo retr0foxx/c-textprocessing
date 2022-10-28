@@ -1,5 +1,3 @@
-add_executable(windows_read_unicode_stdin windows-read-unicode-stdin.c)
 add_executable(winnix_read_unicode_stdin winnix-read-unicode-stdin.c)
 
-target_link_libraries(windows_read_unicode_stdin PRIVATE textprocessing)
 target_link_libraries(winnix_read_unicode_stdin PRIVATE textprocessing)

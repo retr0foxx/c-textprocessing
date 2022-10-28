@@ -87,6 +87,7 @@ int textprocessing_encode_chr(textprocessing_encoding_t enc, int32_t chr, uint8_
                 // break if there are no remaining bits
                 if ((chr & ((uint32_t)~0 << ((i+1) * 6))) == 0)
                     break;
+
             }
             int byte_count_indicator_bit_len = i + 2;
             int byte_count_indicator_offset = (8-byte_count_indicator_bit_len);
@@ -98,10 +99,10 @@ int textprocessing_encode_chr(textprocessing_encoding_t enc, int32_t chr, uint8_
                 // if there isn't then add another `1` to the byte count indicator and then put it in another byte after
                 ++i; ++byte_count_indicator_bit_len;
                 byte_count_indicator |= (1 << byte_count_indicator_offset);
+                buffer[3-i] = 0;
             }
 
             // reset the byte for the byte count indicator and add the byte count indicator
-            // question: instead of resetting why not just set buffer[3-i] to 0 if it puts the indicator at the next byte ?
             buffer[3-i] &= ~(N_BIT_ON(byte_count_indicator_bit_len) << byte_count_indicator_offset);
             buffer[3-i] |= byte_count_indicator;
 

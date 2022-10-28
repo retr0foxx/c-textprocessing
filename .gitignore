@@ -8,4 +8,4 @@ a.exe
 a.out
 test.c
 tests
-temp_build
+temp_build*
