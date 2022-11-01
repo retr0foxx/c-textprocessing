@@ -51,7 +51,7 @@
     // Because after doing _setmode to a certain unicode encoding on windows
     // Only string functions will work on that file stream
     //#define FPUTS_LITERAL(string) fputws(L##string, stdout)
-#elif defined(unix) || defined(__unix__) || defined(__unix)
+#elif defined(unix) || defined(__unix__) || defined(__unix) || defined(POSIX)
     #define OS_UNIX
 
     #include <locale.h>
@@ -60,7 +60,8 @@
     #define OUTPUT_CONVERT_ENCODING TPENC_UTF8
 
     #define SET_LOCALE_TO "en_US.UTF-8"
-
+#else
+    #warning Unsupported platform
 #endif
 
 // Because wide and byte oriented functions aren't compatible with each other
